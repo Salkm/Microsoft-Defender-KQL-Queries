@@ -1,0 +1,41 @@
+🚨 Detecting Device Code Phishing with KQL (Microsoft Sentinel / Defender)
+
+Device code phishing is becoming a popular technique where attackers trick users into authenticating via Microsoft’s device login flow — and then silently register a device under the attacker’s control.
+
+Here’s a simple detection approach 👇
+
+🔍 What we’re looking for:
+• A user clicks a phishing link pointing to Microsoft device login
+• The same user registers a device shortly after
+
+💡 Detection logic (KQL):
+
+CloudAppEvents
+| where Timestamp > ago(1h)
+| where AccountDisplayName == "Device Registration Service"
+| extend ID = extract("Device_(.*)", 1, tostring(RawEventData.ObjectId))
+| join IdentityInfo on $left.ID == $right.AccountObjectId
+| join (
+    UrlClickEvents
+    | where Timestamp > ago(1h)
+    | where Workload == "Email"
+    | where ActionType in ("ClickAllowed", "UrlScanInProgress", "UrlErrorPage")
+        or IsClickedThrough != "0"
+    | where UrlChain has_any (
+        "microsoft.com/devicelogin",
+        "login.microsoftonline.com/common/oauth2/deviceauth"
+    )
+    | distinct AccountUpn
+) on AccountUpn
+
+⚠️ Important Insight:
+This detection correlates activity within the same time window — but it does not guarantee sequence (i.e., click → registration). Fine-tuning with tighter time correlation or session IDs can improve accuracy.
+
+🎯 Why it matters:
+This technique bypasses traditional phishing defenses because users are interacting with legitimate Microsoft endpoints.
+
+🛡️ Defensive tips:
+• Monitor unusual device registrations
+• Apply Conditional Access policies
+• Educate users about device login prompts
+• Investigate suspicious URL click patterns
