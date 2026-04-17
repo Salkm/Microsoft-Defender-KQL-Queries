@@ -1,0 +1,5 @@
+DeviceNetworkEvents
+| where RemoteUrl has_any ("weebly.com", "weeblysite.com")
+| where RemoteUrl has_any ("login", "verify", "secure", "update", "uae", "bank", "moi", "pass")
+| summarize count() by RemoteUrl, DeviceName
+| order by count_ desc
