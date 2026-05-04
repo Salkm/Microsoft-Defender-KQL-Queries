@@ -1,0 +1,11 @@
+CloudAppEvents
+| where Timestamp > ago(30d)
+      and ActionType == "Consent to application."
+      and AccountType == "Admin"
+| project
+    Timestamp,
+    AdminAcc = tostring(RawEventData.UserId),
+    ActionType,
+    ObjectName,
+    ConsentDetails = tostring(RawEventData.ModifiedProperties),
+    ReportId
