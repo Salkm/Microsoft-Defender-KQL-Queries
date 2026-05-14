@@ -1,0 +1,34 @@
+🔍 Hunting for AI Exposure Risks with KQL
+
+As AI agents become more embedded in enterprise environments, understanding their exposure surface is no longer optional — it’s critical.
+
+Here’s a quick KQL snippet I’ve been using to identify AI agents running on internet-facing devices:
+
+
+💡 What this does:
+
+Identifies AI agents running on internet-facing devices, including their public IPs and OS.
+
+
+⚠️ Why it matters:
+
+Exposed AI workloads can increase attack surface and risk.
+
+
+🔐 Next steps:
+
+Validate exposure, restrict access, and monitor closely.
+
+Curious how others are tracking AI exposure in their environments — what’s your approach?
+
+
+
+ExposureGraphEdges
+| where EdgeLabel == "runs on"
+    and SourceNodeLabel == "endpointAiAgent"
+| join kind=inner (
+    DeviceInfo
+    | where IsInternetFacing == true
+    | where isnotempty(PublicIP)
+) on $left.TargetNodeName == $right.DeviceName
+| project SourceNodeName, TargetNodeName, DeviceName, PublicIP, OSPlatform
